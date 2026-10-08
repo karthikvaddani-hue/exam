@@ -96,71 +96,112 @@
     <h3>Program:</h3>
 
 <pre>
-import "package:flutter/material.dart";
-import "package:device_preview/device_preview.dart";
+#include <stdio.h>
 
-void main() {
-  runApp(DevicePreview(builder: (_) => MyApp()));
+#define INFINITY 9999
+#define MAX 10
+
+void dijkstra(int G[MAX][MAX], int n, int startnode);
+
+int main() {
+    int G[MAX][MAX], i, j, n, u;
+
+    printf("Enter number of vertices: ");
+    scanf("%d", &n);
+
+    printf("Enter the adjacency matrix (0 for no edge / self-loop):\n");
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            scanf("%d", &G[i][j]);
+        }
+    }
+
+    printf("Enter the starting node: ");
+    scanf("%d", &u);
+
+    dijkstra(G, n, u);
+
+    return 0;
 }
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(title: Text("Fade Animation")),
-        body: FadeAnimation(),
-      ),
-    );
-  }
-}
+void dijkstra(int G[MAX][MAX], int n, int startnode) {
+    int cost[MAX][MAX], distance[MAX], pred[MAX];
+    int visited[MAX], count, mindistance, nextnode, i, j;
 
-class FadeAnimation extends StatefulWidget {
-  @override
-  _FadeAnimationState createState() => _FadeAnimationState();
-}
+    // Build cost matrix: 0 weights (no edge) become INFINITY
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            if (G[i][j] == 0)
+                cost[i][j] = INFINITY;
+            else
+                cost[i][j] = G[i][j];
+        }
+    }
 
-class _FadeAnimationState extends State&lt;FadeAnimation&gt;
-    with SingleTickerProviderStateMixin {
+    // Initialize pred[], distance[], and visited[]
+    for (i = 0; i < n; i++) {
+        distance[i] = cost[startnode][i];
+        pred[i] = startnode;
+        visited[i] = 0;
+    }
 
-  late AnimationController _controller;
-  late Animation&lt;double&gt; _animation;
+    distance[startnode] = 0;
+    visited[startnode] = 1;
+    count = 1;
 
-  @override
-  void initState() {
-    super.initState();
+    // Main Dijkstra loop
+    while (count < n - 1) {
+        mindistance = INFINITY;
+        nextnode = -1;
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 2),
-    );
+        // Find unvisited node with minimum distance
+        for (i = 0; i < n; i++) {
+            if (!visited[i] && distance[i] < mindistance) {
+                mindistance = distance[i];
+                nextnode = i;
+            }
+        }
 
-    _animation =
-        Tween&lt;double&gt;(begin: 0.0, end: 1.0).animate(_controller);
+        // If no reachable node remains, terminate early
+        if (nextnode == -1) {
+            break;
+        }
 
-    _controller.forward();
-  }
+        visited[nextnode] = 1;
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+        // Relax edges through nextnode
+        for (i = 0; i < n; i++) {
+            if (!visited[i]) {
+                if (mindistance + cost[nextnode][i] < distance[i]) {
+                    distance[i] = mindistance + cost[nextnode][i];
+                    pred[i] = nextnode;
+                }
+            }
+        }
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: FadeTransition(
-        opacity: _animation,
-        child: Container(
-          width: 200,
-          height: 200,
-          color: Colors.blue,
-        ),
-      ),
-    );
-  }
+        count++;
+    }
+
+    // Print shortest distance and path for each node
+    for (i = 0; i < n; i++) {
+        if (i != startnode) {
+            if (distance[i] >= INFINITY) {
+                printf("\nDistance of node %d = Unreachable", i);
+                printf("\nPath = None\n");
+            } else {
+                printf("\nDistance of node %d = %d", i, distance[i]);
+                printf("\nPath = %d", i);
+
+                j = i;
+                do {
+                    j = pred[j];
+                    printf("<-%d", j);
+                } while (j != startnode);
+
+                printf("\n");
+            }
+        }
+    }
 }
 </pre>
 
@@ -197,73 +238,52 @@ class _FadeAnimationState extends State&lt;FadeAnimation&gt;
     <h3>Program:</h3>
 
 <pre>
-import "package:flutter/material.dart";
-import "package:device_preview/device_preview.dart";
+#include <stdio.h>
 
-void main() {
-  runApp(DevicePreview(builder: (_) => MyApp()));
-}
+int main() {
+    int windowsize, sent = 0, ack, i, c;
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(title: Text("Slide Animation")),
-        body: SlideAnimation(),
-      ),
-    );
-  }
-}
+    printf("Enter window size: ");
+    if (scanf("%d", &windowsize) != 1 || windowsize <= 0) {
+        printf("Invalid window size.\n");
+        return 1;
+    }
 
-class SlideAnimation extends StatefulWidget {
-  @override
-  _SlideAnimationState createState() => _SlideAnimationState();
-}
+    // Transmit initial window
+    for (i = 0; i < windowsize; i++) {
+        printf("Frame %d has been transmitted.\n", i);
+    }
+    sent = windowsize;
 
-class _SlideAnimationState extends State&lt;SlideAnimation&gt;
-    with SingleTickerProviderStateMixin {
+    while (1) {
+        printf("\nPlease enter your choice:\n");
+        printf("1 - For lost data or ACK or delayed ACK\n");
+        printf("2 - Exit\n");
+        printf("Choice: ");
+        scanf("%d", &c);
 
-  late AnimationController _controller;
-  late Animation&lt;Offset&gt; _animation;
+        if (c == 1) {
+            printf("\nEnter the frame number (0 to %d): ", windowsize - 1);
+            scanf("%d", &ack);
 
-  @override
-  void initState() {
-    super.initState();
+            if (ack < 0 || ack >= windowsize) {
+                printf("Invalid frame number! Must be between 0 and %d.\n", windowsize - 1);
+                continue;
+            }
 
-    _controller = AnimationController(
-      vsync: this,
-      duration: Duration(seconds: 2),
-    );
+            // Retransmit from the corrupted frame to the end of the window
+            for (i = ack; i < windowsize; i++) {
+                printf("Frame %d has been retransmitted.\n", i);
+            }
+        } else if (c == 2) {
+            printf("Exiting...\n");
+            break;
+        } else {
+            printf("Invalid choice! Enter 1 or 2.\n");
+        }
+    }
 
-    _animation = Tween&lt;Offset&gt;(
-      begin: Offset(-1, 0),
-      end: Offset(0, 0),
-    ).animate(_controller);
-
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: SlideTransition(
-        position: _animation,
-        child: Container(
-          width: 200,
-          height: 200,
-          color: Colors.red,
-        ),
-      ),
-    );
-  }
+    return 0;
 }
 </pre>
 
@@ -300,79 +320,45 @@ class _SlideAnimationState extends State&lt;SlideAnimation&gt;
     <h3>Program:</h3>
 
 <pre>
-import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+#include <stdio.h>
 
-void main() => runApp(MyApp());
+int main() {
+    int a[50], b[100];
+    int n, i, j = 0, count = 0;
 
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: ApiExample()
-    );
-  }
-}
+    printf("Enter frame size in bits: ");
+    scanf("%d", &n);
 
-class ApiExample extends StatefulWidget {
-  @override
-  _ApiExampleState createState() => _ApiExampleState();
-}
-
-class _ApiExampleState extends State&lt;ApiExample&gt; {
-
-  String data = 'Loading...';
-
-  @override
-  void initState() {
-    super.initState();
-    fetchData();
-  }
-
-  Future&lt;void&gt; fetchData() async {
-
-    final response = await http.get(
-      Uri.parse(
-        'https://jsonplaceholder.typicode.com/todos/1'
-      )
-    );
-
-    if (response.statusCode == 200) {
-
-      final jsonData = json.decode(response.body);
-
-      setState(() {
-        data = jsonData['title'];
-      });
-
-    } else {
-
-      setState(() {
-        data = 'Failed to load data';
-      });
-
+    printf("Enter the frame in the form of 0 and 1: ");
+    for (i = 0; i < n; i++) {
+        scanf("%d", &a[i]);
     }
-  }
 
-  @override
-  Widget build(BuildContext context) {
+    for (i = 0; i < n; i++) {
+        b[j++] = a[i];
 
-    return Scaffold(
+        if (a[i] == 1) {
+            count++;
+            // After 5 consecutive 1s, stuff a 0
+            if (count == 5) {
+                b[j++] = 0;
+                count = 0; // Reset counter after stuffing
+            }
+        } else {
+            count = 0; // Reset counter if bit is 0
+        }
+    }
 
-      appBar: AppBar(
-        title: Text('Fetch API Data')
-      ),
+    printf("\nAfter Bit Stuffing:\n");
+    printf("01111110 "); // Starting Flag
 
-      body: Center(
-        child: Text(
-          data,
-          style: TextStyle(fontSize: 20)
-        )
-      ),
+    for (i = 0; i < j; i++) {
+        printf("%d", b[i]);
+    }
 
-    );
-  }
+    printf(" 01111110\n"); // Ending Flag
+
+    return 0;
 }
 </pre>
 
